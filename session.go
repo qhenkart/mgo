@@ -2858,6 +2858,25 @@ func (q *Query) Sort(fields ...string) *Query {
 	return q
 }
 
+// Collation defines the strength level or parameters in which to perform a search
+//
+// ex: Query.Collation(&mgo.Collation{Locale: "en",  Strength: 1})
+//
+// Strength Levels:
+//
+// 1. matches the base character. Case and diacritics are ignored
+//
+// 2. matches the character case-insensitive, diacritics are recognized
+//
+// 3. matches only the specific character. Case-Sensitive
+func (q *Query) Collation(collation *Collation) *Query {
+	q.m.Lock()
+	q.op.options.Collation = collation
+	q.op.hasOptions = true
+	q.m.Unlock()
+	return q
+}
+
 // Explain returns a number of details about how the MongoDB server would
 // execute the requested query, such as the number of objects examined,
 // the number of times the read lock was yielded to allow writes to go in,
@@ -3161,6 +3180,7 @@ func prepareFindOp(socket *mongoSocket, op *queryOp, limit int32) bool {
 		Comment:     op.options.Comment,
 		Snapshot:    op.options.Snapshot,
 		OplogReplay: op.flags&flagLogReplay != 0,
+		Collation:   op.options.Collation,
 	}
 	if op.limit < 0 {
 		find.BatchSize = -op.limit
@@ -3222,6 +3242,7 @@ type findCmd struct {
 	OplogReplay         bool        `bson:"oplogReplay,omitempty"`
 	NoCursorTimeout     bool        `bson:"noCursorTimeout,omitempty"`
 	AllowPartialResults bool        `bson:"allowPartialResults,omitempty"`
+	Collation           *Collation  `bson:"collation,omitempty"`
 }
 
 // getMoreCmd holds the command used for requesting more query results on MongoDB 3.2+.

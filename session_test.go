@@ -37,8 +37,8 @@ import (
 	"strings"
 	"time"
 
+	mgo "github.com/qhenkart/mgo"
 	. "gopkg.in/check.v1"
-	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -4233,4 +4233,31 @@ func (s *S) BenchmarkFindIterRaw(c *C) {
 	c.StopTimer()
 	c.Assert(iter.Err(), IsNil)
 	c.Assert(i, Equals, c.N)
+}
+
+func (s *S) TestCollationQueries(c *C) {
+	if !s.versionAtLeast(3, 3, 12) {
+		c.Skip("feature compatibility version must be set to >= 3.4")
+	}
+	session, err := mgo.Dial("localhost:40001")
+	c.Assert(err, IsNil)
+	defer session.Close()
+
+	docs := []interface{}{
+		map[string]interface{}{"name": "apple"},
+		map[string]interface{}{"name": "aPPle"},
+	}
+
+	coll := session.DB("mydb").C("mycoll")
+	err = coll.Insert(docs...)
+	c.Assert(err, IsNil)
+
+	collation := &mgo.Collation{
+		Locale:   "en",
+		Strength: 2,
+	}
+
+	count, err := coll.Find(bson.M{"name": "apple"}).Collation(collation).Count()
+	c.Assert(err, IsNil)
+	c.Assert(count, Equals, 2)
 }
