@@ -34,8 +34,8 @@ import (
 	"sync"
 	"time"
 
+	mgo "github.com/qhenkart/mgo"
 	. "gopkg.in/check.v1"
-	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -1476,7 +1476,6 @@ func (s *S) TestSecondaryModeWithMongosInsert(c *C) {
 	coll.Find(nil).One(&result)
 	c.Assert(result.A, Equals, 1)
 }
-
 
 func (s *S) TestRemovalOfClusterMember(c *C) {
 	if *fast {

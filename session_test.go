@@ -37,8 +37,8 @@ import (
 	"strings"
 	"time"
 
+	mgo "github.com/qhenkart/mgo"
 	. "gopkg.in/check.v1"
-	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -4243,21 +4243,21 @@ func (s *S) TestCollationQueries(c *C) {
 	c.Assert(err, IsNil)
 	defer session.Close()
 
-	docsToInsert := []bson.M{
-		{"name": "apple"},
-		{"name": "aPPle"},
+	docs := []interface{}{
+		map[string]interface{}{"name": "apple"},
+		map[string]interface{}{"name": "aPPle"},
 	}
 
 	coll := session.DB("mydb").C("mycoll")
-	err = coll.Insert(doc...)
+	err = coll.Insert(docs...)
 	c.Assert(err, IsNil)
 
-	collation := &Collation{
+	collation := &mgo.Collation{
 		Locale:   "en",
 		Strength: 2,
 	}
 
-	count, err := coll.Find(bson.M{name: "apple"}).Collation(collation).count()
+	count, err := coll.Find(bson.M{"name": "apple"}).Collation(collation).Count()
 	c.Assert(err, IsNil)
 	c.Assert(count, Equals, 2)
 }
